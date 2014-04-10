@@ -39,6 +39,6 @@
 
 
 ##### Show me my Templates
-      fst list
+      fst
 
   Displays all the templates that fst knows about as it is currently configured.
