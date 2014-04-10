@@ -14,6 +14,8 @@
 
 ## Configuration
 
+  Configuration is controlled by environment variables, which are listed below.
+
 * `FST_REPOSITORY` A valid repository url for the repo used to store templates.  You'll want this one to be empty initially as FST will assume ownership of the repo.
 * `FST_WORKING_DIR` The location used as the working directory of FST, where repo work will be done and items will be cached.  If not set defaults to ~/.fst
 
