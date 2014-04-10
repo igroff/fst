@@ -27,7 +27,7 @@
   
   In the case of an update ( the provided template name matches that of an existing template ), the changes will be applied over the existing template. Don't worry the old one is still there in the event of something awful this is, afterall built on top of git.
 
-##### Unpack a Template
+##### Use a Template
       fst <template name> [<destination dir>]
 
   Unpacks a template to the directory specified by <destination dir>. If the
