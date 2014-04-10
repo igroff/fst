@@ -23,7 +23,7 @@
 ##### Create a Template from a Directory
       fst --store <dirname> [--name <template name>] 
 
-  Creates or updates a template from the directory named <dirname>, optionally one can specify a name <template name> that will be used to name the template.  If no template name is provided the name of the directory from <dirname> will be used.  
+  Creates or updates a template from the directory named \<dirname\>, optionally one can specify a name <template name> that will be used to name the template.  If no template name is provided the name of the directory from <dirname> will be used.  
   
   In the case of an update ( the provided template name matches that of an existing template ), the changes will be applied over the existing template. Don't worry the old one is still there in the event of something awful this is, afterall built on top of git.
 
