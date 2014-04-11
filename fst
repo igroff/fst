@@ -66,6 +66,10 @@ if [ -n "${TEMPLATE_DIR}" ]; then
   # -d <dir> -n <name>
   TEMPLATE_NAME=${4:-$(basename ${TEMPLATE_DIR})}
 elif [ -n "${TEMPLATE_NAME}" ]; then
+  DESTINATION_DIR=${2}
+  # here either, the destination dir is absolute (starts with a slash) or we will
+  # make it relative to our current location
+  [[ "${DESTINATION_DIR}" == \/* ]] || DESTINATION_DIR=${CURRENT_DIR}/${DESTINATION_DIR}
   ACTION=unpack
 else
   ACTION=list
@@ -87,7 +91,12 @@ if [ "${ACTION}" = "create" ]; then
       exit 4
     fi
 
-    CP_OUTPUT=$(debug "Copying template contents from ${TEMPLATE_DIR}" && cp -R ${TEMPLATE_DIR}/* .;)
+    CP_OUTPUT=$(
+      debug "Copying template contents from ${TEMPLATE_DIR}"
+      # we really want our news stuff to overwrite the old. so..
+      rm -rf ${REPO_DIR}/*
+      cp -R ${TEMPLATE_DIR}/* . 2>&1
+    )
     CP_RESULT=$?
     if [ $CP_RESULT -ne 0 ]; then 
       error 'We had some trouble copying the contents of your template into the repo for checkin'
@@ -97,7 +106,7 @@ if [ "${ACTION}" = "create" ]; then
     fi
 
     COMMIT_OUTPUT=$(
-      git add . && git commit -m "no message here";
+      git add . 2>&1 && git commit -m "no message here" 2>&1;
     )
     COMMIT_RESULT=$?
     if [ $COMMIT_RESULT -ne 0 -a $COMMIT_RESULT -ne 1 ]; then
@@ -146,5 +155,31 @@ elif [ "$ACTION" = "list" ]; then
   # undo the noglob from before
   set +f
 elif [ "$ACTION" = "unpack" ]; then
-  echo Im totally unpacking your templates
+  debug "DESTINATION_DIR: ${DESTINATION_DIR}"
+  (
+    cd "${REPO_DIR}";
+    UNPACK_OUTPUT=$(
+      git checkout ${TEMPLATE_NAME} 2>&1
+    )
+    UNPACK_RESULT=$?
+    if [ $UNPACK_RESULT -ne 0 ]; then
+      error "There was a problem unpacking that template, you sure ${TEMPLATE_NAME} is valid?"
+      debug $UNPACK_RESULT
+      error $UNPACK_OUTPUT
+      exit 8
+    fi
+    COPY_OUTPUT=$(
+      mkdir -p ${DESTINATION_DIR} 2>&1
+      rsync -av --exclude='.git/' ${REPO_DIR}/ ${DESTINATION_DIR}/ 2>&1
+    )
+    COPY_RESULT=$?
+    if [ $COPY_RESULT -ne 0 ]; then
+      error "I had a problem copying your template ${TEMPLATE_NAME} into the specified directory ${DESTINATION_DIR}"
+      debug $COPY_RESULT
+      error $COPY_OUTPUT
+      exit 9
+    fi
+  )
+  UNPACK_RESULT=$?
+  [ $UNPACK_RESULT -eq 0 ] || exit $UNPACK_RESULT
 fi
