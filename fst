@@ -44,3 +44,20 @@ while getopts ":d:n:" opt; do
       ;;
   esac
 done
+
+[ -n "$1" ] && TEMPLATE_NAME=$1
+# if we have a template dir, we're creating a template
+# if we have just a template name, we're unpacking a template
+# if we got nothing, we're listing our templates
+
+([ -n "${TEMPLATE_DIR}" ] && ACTION=create) || ([ -n "${TEMPLATE_NAME}" ] && ACTION=unpack)
+
+if [ -n "${TEMPLATE_DIR}" ]; then
+  ACTION=create
+elif [ -n "${TEMPLATE_NAME}" ]; then
+  ACTION=unpack
+else
+  ACTION=list
+fi
+
+echo $ACTION
