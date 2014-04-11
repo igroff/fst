@@ -72,55 +72,75 @@ else
 fi
 
 
+debug "Action: ${ACTION}"
 if [ "${ACTION}" = "create" ]; then
-(
-  cd ${REPO_DIR}
-  CO_OUTPUT=$(
-    git checkout $TEMPLATE_NAME  2>&1 || git checkout -b origin/${TEMPLATE_NAME} 2>&1 || git checkout -b ${TEMPLATE_NAME} origin/master 2>&1;
-  )
-  CO_RESULT=$?
-  if [ $CO_RESULT -ne 0 ]; then
-    error 'We seem to have encountered a problem checking out the template branch!'
-    debug "exit code $CO_RESULT"
-    error "$CO_OUTPUT"
-    exit 4
-  fi
+  (
+    cd ${REPO_DIR}
+    CO_OUTPUT=$(
+      git checkout $TEMPLATE_NAME  2>&1 || git checkout -b origin/${TEMPLATE_NAME} 2>&1 || git checkout -b ${TEMPLATE_NAME} origin/master 2>&1;
+    )
+    CO_RESULT=$?
+    if [ $CO_RESULT -ne 0 ]; then
+      error 'We seem to have encountered a problem checking out the template branch!'
+      debug "exit code $CO_RESULT"
+      error "$CO_OUTPUT"
+      exit 4
+    fi
 
-  CP_OUTPUT=$(debug "Copying template contents from ${TEMPLATE_DIR}" && cp -R ${TEMPLATE_DIR}/* .;)
-  CP_RESULT=$?
-  if [ $CP_RESULT -ne 0 ]; then 
-    error 'We had some trouble copying the contents of your template into the repo for checkin'
-    debug "exit code $CP_RESULT"
-    error "The problem looked like: ${CP_OUTPUT}"
-    exit 5
-  fi
+    CP_OUTPUT=$(debug "Copying template contents from ${TEMPLATE_DIR}" && cp -R ${TEMPLATE_DIR}/* .;)
+    CP_RESULT=$?
+    if [ $CP_RESULT -ne 0 ]; then 
+      error 'We had some trouble copying the contents of your template into the repo for checkin'
+      debug "exit code $CP_RESULT"
+      error "The problem looked like: ${CP_OUTPUT}"
+      exit 5
+    fi
 
-  COMMIT_OUTPUT=$(
-    git add . && git commit -m "no message here";
+    COMMIT_OUTPUT=$(
+      git add . && git commit -m "no message here";
+    )
+    COMMIT_RESULT=$?
+    if [ $COMMIT_RESULT -ne 0 -a $COMMIT_RESULT -ne 1 ]; then
+      error 'We seem to have had an error checking in your template'
+      debug "exit code $COMMIT_RESULT"
+      error "Here's what happend: ${COMMIT_OUTPUT}"
+      exit 6
+    fi
+    
+    PUSH_OUTPUT=$(
+      git push origin ${TEMPLATE_NAME} 2>&1;
+    )
+    PUSH_RESULT=$?
+    if [ $PUSH_RESULT -ne 0 ]; then
+      error 'We had some trouble pushing the template changes back to origin'
+      error "See: \n${PUSH_OUTPUT}"
+      exit 7
+    fi
   )
-  COMMIT_RESULT=$?
-  if [ $COMMIT_RESULT -ne 0 -a $COMMIT_RESULT -ne 1 ]; then
-    error 'We seem to have had an error checking in your template'
-    debug "exit code $COMMIT_RESULT"
-    error "Here's what happend: ${COMMIT_OUTPUT}"
-    exit 6
-  fi
-  
-  PUSH_OUTPUT=$(
-    git push origin ${TEMPLATE_NAME} 2>&1;
-  )
-  PUSH_RESULT=$?
-  if [ $PUSH_RESULT -ne 0 ]; then
-    error 'We had some trouble pushing the template changes back to origin'
-    error "See: \n${PUSH_OUTPUT}"
-    exit 7
-  fi
-)
   CREATE_RESULT=$?
   if [ $CREATE_RESULT -ne 0 ]; then
     error 'Looks like we had some problems creating the template for you, you work that out and try again ya hear?'
     exit $CREATE_RESULT
   fi
+else if [ "$ACTION" = "list" ]; then
+  set -f
+  LIST_OUTPUT=$(
+   cd "${REPO_DIR}" && git branch 2>&1;
+  )
+  LIST_RESULT=$?
+  if [ $LIST_RESULT -ne 0 ]; then
+    error 'Hmm, something went wrong while listing your templates..'
+    debug $LIST_RESULT
+    error $LIST_OUTPUT
+    exit $LIST_RESULT
+  fi
+  echo "Here are the templates I know about:"
+  for template in $(echo $LIST_OUTPUT | sed -e s[\*[[g )
+  do
+    if [ 'origin/master' != "$template" -a 'master' != "$template" ]; then
+      echo "  $template"
+    fi
+  done
+  set +f
 fi
-
-echo 'Thanks!'
+fi
