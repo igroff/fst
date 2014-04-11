@@ -122,7 +122,9 @@ if [ "${ACTION}" = "create" ]; then
     error 'Looks like we had some problems creating the template for you, you work that out and try again ya hear?'
     exit $CREATE_RESULT
   fi
-else if [ "$ACTION" = "list" ]; then
+elif [ "$ACTION" = "list" ]; then
+  # so, git will put * into the branch listing which is kind of a bitch as the shell
+  # sure wants to expand that, so we tell it NO GLOBBIN' KITTY!
   set -f
   LIST_OUTPUT=$(
    cd "${REPO_DIR}" && git branch 2>&1;
@@ -141,6 +143,8 @@ else if [ "$ACTION" = "list" ]; then
       echo "  $template"
     fi
   done
+  # undo the noglob from before
   set +f
-fi
+elif [ "$ACTION" = "unpack" ]; then
+  echo Im totally unpacking your templates
 fi
