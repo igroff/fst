@@ -6,9 +6,12 @@ REPO_DIR=${FST_REPO_DIR:-~/.fst}
 
 # ******************************************************************************
 # utils
-debug() { [ -n "${DEBUG}" ] && write_log ${FUNCNAME^^} $@; }
+debug() { [ -n "${DEBUG}" ] && echo ${FUNCNAME^^} $@; }
+export -f debug
 info() { echo "$@"; }
+export -f info
 error() { echo "$@" >&2; }
+export -f error
 #
 # ******************************************************************************
 
@@ -73,18 +76,51 @@ if [ "${ACTION}" = "create" ]; then
 (
   cd ${REPO_DIR}
   CO_OUTPUT=$(
-    git checkout $TEMPLATE_NAME  || git checkout -b origin/${TEMPLATE_NAME} || git checkout -b origin/master;
+    git checkout $TEMPLATE_NAME  2>&1 || git checkout -b origin/${TEMPLATE_NAME} 2>&1 || git checkout -b ${TEMPLATE_NAME} origin/master 2>&1;
   )
   CO_RESULT=$?
   if [ $CO_RESULT -ne 0 ]; then
-    error "We seem to have encountered a problem checking out the template branch?"
-    #keep in mind, I'm a subshell
-    exit 1
+    error 'We seem to have encountered a problem checking out the template branch!'
+    debug "exit code $CO_RESULT"
+    error "$CO_OUTPUT"
+    exit 4
+  fi
+
+  CP_OUTPUT=$(debug "Copying template contents from ${TEMPLATE_DIR}" && cp -R ${TEMPLATE_DIR}/* .;)
+  CP_RESULT=$?
+  if [ $CP_RESULT -ne 0 ]; then 
+    error 'We had some trouble copying the contents of your template into the repo for checkin'
+    debug "exit code $CP_RESULT"
+    error "The problem looked like: ${CP_OUTPUT}"
+    exit 5
+  fi
+
+  COMMIT_OUTPUT=$(
+    git add . && git commit -m "no message here";
+  )
+  COMMIT_RESULT=$?
+  if [ $COMMIT_RESULT -ne 0 -a $COMMIT_RESULT -ne 1 ]; then
+    error 'We seem to have had an error checking in your template'
+    debug "exit code $COMMIT_RESULT"
+    error "Here's what happend: ${COMMIT_OUTPUT}"
+    exit 6
+  fi
+  
+  PUSH_OUTPUT=$(
+    git push origin ${TEMPLATE_NAME} 2>&1;
+  )
+  PUSH_RESULT=$?
+  if [ $PUSH_RESULT -ne 0 ]; then
+    error 'We had some trouble pushing the template changes back to origin'
+    error "See: \n${PUSH_OUTPUT}"
+    exit 7
   fi
 )
+  CREATE_RESULT=$?
+  if [ $CREATE_RESULT -ne 0 ]; then
+    error 'Looks like we had some problems creating the template for you, you work that out and try again ya hear?'
+    exit $CREATE_RESULT
+  fi
 fi
 
-echo Action: $ACTION
-echo Template Dir: $TEMPLATE_DIR
-echo Template Name: $TEMPLATE_NAME
-
+echo 'Thanks!'
