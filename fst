@@ -3,6 +3,7 @@
 
 REPO=${FST_REPOSITORY?You must set FST_REPOSITORY or there is nothing I can do!}
 REPO_DIR=${FST_REPO_DIR:-~/.fst}
+MY_PATH=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)/`basename "${BASH_SOURCE[0]}"`
 
 # ******************************************************************************
 # utils
@@ -65,6 +66,8 @@ if [ -n "${TEMPLATE_DIR}" ]; then
   # because -d <dir> get's us here and to specify a template name it'll be like
   # -d <dir> -n <name>
   TEMPLATE_NAME=${4:-$(basename ${TEMPLATE_DIR})}
+elif [ "${TEMPLATE_NAME}" = "install" ]; then
+  ACTION=install
 elif [ -n "${TEMPLATE_NAME}" ]; then
   DESTINATION_DIR=${2}
   # here either, the destination dir is absolute (starts with a slash) or we will
@@ -131,6 +134,8 @@ if [ "${ACTION}" = "create" ]; then
     error 'Looks like we had some problems creating the template for you, you work that out and try again ya hear?'
     exit $CREATE_RESULT
   fi
+elif [ "$ACTION" = "install" ]; then
+  mkdir -p ~/.bin && cp ${MY_PATH} ~/.bin/
 elif [ "$ACTION" = "list" ]; then
   # so, git will put * into the branch listing which is kind of a bitch as the shell
   # sure wants to expand that, so we tell it NO GLOBBIN' KITTY!
