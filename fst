@@ -81,7 +81,7 @@ if [ "${ACTION}" = "create" ]; then
   (
     cd ${REPO_DIR}
     CO_OUTPUT=$(
-      git checkout $TEMPLATE_NAME  2>&1 || git checkout -b origin/${TEMPLATE_NAME} 2>&1 || git checkout -b ${TEMPLATE_NAME} origin/master 2>&1;
+      git checkout $TEMPLATE_NAME  2>&1 || git checkout -b ${TEMPLATE_NAME} origin/master 2>&1;
     )
     CO_RESULT=$?
     if [ $CO_RESULT -ne 0 ]; then
@@ -135,14 +135,12 @@ elif [ "$ACTION" = "install" ]; then
   mkdir -p ~/.bin && cp ${MY_PATH} ~/.bin/
   [ -d "${REPO_DIR}" ] && rm -rf "${REPO_DIR}"
   debug Working directory: ${REPO_DIR}
-  if [ ! -d ${REPO_DIR} ]; then
-    info "going to get your repository for the first time, gimme a sec."
-    CLONE_OUTPUT=$(git clone ${REPO} ${REPO_DIR} 2>&1)
-    if [ $? -ne 0 ]; then
-      error "error cloning your template repo, is it set correctly?  Here's what I think it is: ${REPO}"
-      error "And the error from the git was: ${CLONE_OUTPUT}"
-      exit 3
-    fi
+  info "going to get your repository for the first time, gimme a sec."
+  CLONE_OUTPUT=$(git clone ${REPO} ${REPO_DIR} 2>&1)
+  if [ $? -ne 0 ]; then
+    error "error cloning your template repo, is it set correctly?  Here's what I think it is: ${REPO}"
+    error "And the error from the git was: ${CLONE_OUTPUT}"
+    exit 3
   fi
 elif [ "$ACTION" = "list" ]; then
   # so, git will put * into the branch listing which is kind of a bitch as the shell
