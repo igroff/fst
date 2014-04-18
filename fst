@@ -1,8 +1,11 @@
 #! /usr/bin/env bash
 # vim: set ft=sh
 
-REPO=${FST_REPOSITORY?You must set FST_REPOSITORY or there is nothing I can do!}
 REPO_DIR=${FST_REPO_DIR:-~/.fst}
+if [ "${REPO_DIR}" = "." -o "${REPO_DIR}" = ".." ]; then
+  error "I won't let you use current or parent directory indicators for your repo dir, it'd be bad"
+  exit 23
+fi
 MY_PATH=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)/`basename "${BASH_SOURCE[0]}"`
 
 # ******************************************************************************
@@ -17,17 +20,6 @@ export -f error
 # ******************************************************************************
 
 which git &> /dev/null || $(echo 'You must have git, or I can do nothing!' && exit 1)
-
-debug Working directory: ${REPO_DIR}
-if [ ! -d ${REPO_DIR} ]; then
-  info "going to get your repository for the first time, gimme a sec."
-  CLONE_OUTPUT=$(git clone ${REPO} ${REPO_DIR} 2>&1)
-  if [ $? -ne 0 ]; then
-    error "error cloning your template repo, is it set correctly?  Here's what I think it is: ${REPO}"
-    error "And the error from the git was: ${CLONE_OUTPUT}"
-    exit 3
-  fi
-fi
 
 while getopts ":d:n:" opt; do
   case $opt in
@@ -68,6 +60,11 @@ if [ -n "${TEMPLATE_DIR}" ]; then
   TEMPLATE_NAME=${4:-$(basename ${TEMPLATE_DIR})}
 elif [ "${TEMPLATE_NAME}" = "install" ]; then
   ACTION=install
+  REPO=${2}
+  if [ -z "${REPO}" ]; then
+    error "you must provide a url to your template repository"
+    exit 22
+  fi
 elif [ -n "${TEMPLATE_NAME}" ]; then
   DESTINATION_DIR=${2}
   # here either, the destination dir is absolute (starts with a slash) or we will
@@ -136,6 +133,17 @@ if [ "${ACTION}" = "create" ]; then
   fi
 elif [ "$ACTION" = "install" ]; then
   mkdir -p ~/.bin && cp ${MY_PATH} ~/.bin/
+  [ -d "${REPO_DIR}" ] && rm -rf "${REPO_DIR}"
+  debug Working directory: ${REPO_DIR}
+  if [ ! -d ${REPO_DIR} ]; then
+    info "going to get your repository for the first time, gimme a sec."
+    CLONE_OUTPUT=$(git clone ${REPO} ${REPO_DIR} 2>&1)
+    if [ $? -ne 0 ]; then
+      error "error cloning your template repo, is it set correctly?  Here's what I think it is: ${REPO}"
+      error "And the error from the git was: ${CLONE_OUTPUT}"
+      exit 3
+    fi
+  fi
 elif [ "$ACTION" = "list" ]; then
   # so, git will put * into the branch listing which is kind of a bitch as the shell
   # sure wants to expand that, so we tell it NO GLOBBIN' KITTY!

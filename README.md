@@ -12,12 +12,10 @@
   aimed at some more specific use case. This system is designed with the only
   assumption being that you're going to interact with 'file system stuff'.
 
-## Configuration
+### Installation
+      fst install <repo url>
 
-  Configuration is controlled by environment variables, which are listed below.
-
-* `FST_REPOSITORY` A valid repository url for the repo used to store templates.  You'll want this one to be empty initially as FST will assume ownership of the repo.
-* `FST_WORKING_DIR` The location used as the working directory of FST, where repo work will be done and items will be cached.  If not set defaults to ~/.fst
+  Installation is about as simple as it can get, fst copies itself to ~/.bin (making it if it doesn't exist) and clones your template repo specified.  fst will use ~/.fst as it's working directory, and this is the location that your repo will be cloned for use by fst.  Install WILL REPLACE your existing repo in ~/.fst (i.e. it will remove the existing one and clone anew).
 
 
 ##### Create a Template from a Directory
