@@ -2,10 +2,6 @@
 # vim: set ft=sh
 
 REPO_DIR=${FST_REPO_DIR:-~/.fst}
-if [ "${REPO_DIR}" = "." -o "${REPO_DIR}" = ".." ]; then
-  error "I won't let you use current or parent directory indicators for your repo dir, it'd be bad"
-  exit 23
-fi
 MY_PATH=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)/`basename "${BASH_SOURCE[0]}"`
 
 # ******************************************************************************
@@ -19,7 +15,28 @@ export -f error
 #
 # ******************************************************************************
 
-which git &> /dev/null || $(echo 'You must have git, or I can do nothing!' && exit 1)
+
+# ******************************************************************************
+# constants
+E_NOGIT=1
+E_OPT_INVALID=2
+E_CLONE=3
+E_CHECKOUT=4
+E_COPY=5
+E_COMMIT=6
+E_PUSH=7
+E_UNPACK=8
+E_NO_REPO_URL=22
+E_BAD_REPO_DIR=23
+# ******************************************************************************
+
+
+if [ "${REPO_DIR}" = "." -o "${REPO_DIR}" = ".." ]; then
+  error "I won't let you use current or parent directory indicators for your repo dir, it'd be bad"
+  exit $E_BAD_REPO_DIR
+fi
+
+which git &> /dev/null || $(echo 'You must have git, or I can do nothing!' && exit $E_NOGIT)
 
 while getopts ":d:n:" opt; do
   case $opt in
@@ -31,12 +48,12 @@ while getopts ":d:n:" opt; do
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
-      exit 1
+      exit $E_OPT_INVALID
       ;;
     :)
       [ $OPTARG == d ] && echo "You'll need to give me a directory to create template from." >&2
       [ $OPTARG == n ] && echo "To use -${OPTARG} you need to provide a name" >&2
-      exit 1
+      exit $E_OPT_INVALID
       ;;
   esac
 done
@@ -63,7 +80,7 @@ elif [ "${TEMPLATE_NAME}" = "install" ]; then
   REPO=${2}
   if [ -z "${REPO}" ]; then
     error "you must provide a url to your template repository"
-    exit 22
+    exit $E_NO_REPO_URL
   fi
 elif [ -n "${TEMPLATE_NAME}" ]; then
   DESTINATION_DIR=${2}
@@ -88,7 +105,7 @@ if [ "${ACTION}" = "create" ]; then
       error 'We seem to have encountered a problem checking out the template branch!'
       debug "exit code $CO_RESULT"
       error "$CO_OUTPUT"
-      exit 4
+      exit $E_CHECKOUT
     fi
 
     CP_OUTPUT=$(
@@ -102,7 +119,7 @@ if [ "${ACTION}" = "create" ]; then
       error 'We had some trouble copying the contents of your template into the repo for checkin'
       debug "exit code $CP_RESULT"
       error "The problem looked like: ${CP_OUTPUT}"
-      exit 5
+      exit $E_COPY
     fi
 
     COMMIT_OUTPUT=$(
@@ -113,7 +130,7 @@ if [ "${ACTION}" = "create" ]; then
       error 'We seem to have had an error checking in your template'
       debug "exit code $COMMIT_RESULT"
       error "Here's what happend: ${COMMIT_OUTPUT}"
-      exit 6
+      exit $E_COMMIT
     fi
     
     PUSH_OUTPUT=$(
@@ -123,7 +140,7 @@ if [ "${ACTION}" = "create" ]; then
     if [ $PUSH_RESULT -ne 0 ]; then
       error 'We had some trouble pushing the template changes back to origin'
       error "See: \n${PUSH_OUTPUT}"
-      exit 7
+      exit $E_PUSH
     fi
   )
   CREATE_RESULT=$?
@@ -140,7 +157,7 @@ elif [ "$ACTION" = "install" ]; then
   if [ $? -ne 0 ]; then
     error "error cloning your template repo, is it set correctly?  Here's what I think it is: ${REPO}"
     error "And the error from the git was: ${CLONE_OUTPUT}"
-    exit 3
+    exit $E_CLONE
   fi
 elif [ "$ACTION" = "list" ]; then
   # so, git will put * into the branch listing which is kind of a bitch as the shell
@@ -177,7 +194,7 @@ elif [ "$ACTION" = "unpack" ]; then
       error "There was a problem unpacking that template, you sure ${TEMPLATE_NAME} is valid?"
       debug $UNPACK_RESULT
       error $UNPACK_OUTPUT
-      exit 8
+      exit $E_UNPACK
     fi
     COPY_OUTPUT=$(
       mkdir -p ${DESTINATION_DIR} 2>&1
@@ -188,7 +205,7 @@ elif [ "$ACTION" = "unpack" ]; then
       error "I had a problem copying your template ${TEMPLATE_NAME} into the specified directory ${DESTINATION_DIR}"
       debug $COPY_RESULT
       error $COPY_OUTPUT
-      exit 9
+      exit $E_COPY
     fi
   )
   UNPACK_RESULT=$?
