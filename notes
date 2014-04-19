@@ -1,0 +1,51 @@
+
+
+Create Template - This flow sucks for sharing templates with others (but it's what we got)
+- template branch exists
+-- update that branch
+- template branch does not exist
+-- create branch for template
+-- commit changes
+- push changes for branch up OVER any existing branch on the remote 
+
+Create Template - Better job of handling sharing with others
+- template branch exists
+-- update that branch
+- template branch does not exist
+-- create branch for template
+-- commit changes
+- push changes
+-- push fail
+--- fetch fail
+---- no network
+----- try again later
+----- done
+---- tell the user we have no idea, 
+----- done
+--- fetch success
+--- merge success
+---- push
+--- merge fail
+---- have use resolve conflicts
+---- commit
+---- push
+-- push success
+--- done
+
+Use Template
+- if template branch exists
+-- check out that branch
+-- copy it's contents to the location specified
+- template branch does not exist
+-- fetch success
+-- if template branch exists
+--- check out that branch
+--- copy it's contents to the location specified
+-- else
+--- tell 'em we aint got that
+-- fetch fails
+--- tell 'em we aint got that
+
+
+Questions:
+- What if an action is performed while not online?
