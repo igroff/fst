@@ -101,6 +101,7 @@ if [ "${ACTION}" = "create" ]; then
       git checkout $TEMPLATE_NAME  2>&1 || git checkout -b ${TEMPLATE_NAME} origin/master 2>&1;
     )
     CO_RESULT=$?
+    debug "CO_OUTPUT: $CO_OUTPUT"
     if [ $CO_RESULT -ne 0 ]; then
       error 'We seem to have encountered a problem checking out the template branch!'
       debug "exit code $CO_RESULT"
@@ -115,6 +116,7 @@ if [ "${ACTION}" = "create" ]; then
       cp -R ${TEMPLATE_DIR}/* . 2>&1
     )
     CP_RESULT=$?
+    debug "CP_OUTPUT: $CP_OUTPUT"
     if [ $CP_RESULT -ne 0 ]; then 
       error 'We had some trouble copying the contents of your template into the repo for checkin'
       debug "exit code $CP_RESULT"
@@ -126,6 +128,7 @@ if [ "${ACTION}" = "create" ]; then
       git add . 2>&1 && git commit -m "no message here" 2>&1;
     )
     COMMIT_RESULT=$?
+    debug "COMMIT_OUTPUT: $COMMIT_OUTPUT"
     if [ $COMMIT_RESULT -ne 0 -a $COMMIT_RESULT -ne 1 ]; then
       error 'We seem to have had an error checking in your template'
       debug "exit code $COMMIT_RESULT"
@@ -137,6 +140,7 @@ if [ "${ACTION}" = "create" ]; then
       git push origin ${TEMPLATE_NAME} 2>&1;
     )
     PUSH_RESULT=$?
+    debug "PUSH_OUTPUT: $PUSH_OUTPUT"
     if [ $PUSH_RESULT -ne 0 ]; then
       error 'We had some trouble pushing the template changes back to origin'
       error "See: \n${PUSH_OUTPUT}"
