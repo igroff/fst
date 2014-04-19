@@ -19,7 +19,7 @@
 
 
 ##### Create a Template from a Directory
-      fst --store <dirname> [--name <template name>] 
+      fst -d <dirname> [-n <template name>] 
 
   Creates or updates a template from the directory named \<dirname\>, optionally one can specify a name <template name> that will be used to name the template.  If no template name is provided the name of the directory from <dirname> will be used.  
   
